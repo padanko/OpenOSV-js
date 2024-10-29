@@ -1,0 +1,88 @@
+body {
+  font-family: "Arial", sans-serif;
+  background-color: #efefef;
+  color: #111;
+}
+
+.card {
+  padding: 20px;
+  border-radius: 10px;
+  color: white;
+  margin: 10px;
+  box-shadow: 0px 3px 30px rgba(0, 0, 0, 0.3);
+}
+.card--primary {
+  background-color: #3498db;
+}
+.card--secondary {
+  background-color: #9e9e9e;
+}
+.card--success {
+  background-color: #2ecc71;
+}
+.card--danger {
+  background-color: #e74c3c;
+}
+.card--warning {
+  background-color: #f1c40f;
+}
+.card--info {
+  background-color: #00ffff;
+}
+.card--white {
+  background-color: #fafafa;
+  color: black;
+}
+
+body {
+  background-color: #efefef;
+}
+
+.center {
+  text-align: center;
+}
+
+.text-input {
+  background-color: #fff;
+  color: #111;
+  border: #111 solid 1px;
+  border-radius: 10px;
+  height: 40px;
+}
+
+.btn {
+  border-radius: 10px;
+  border: none;
+  height: 40px;
+  min-width: 70px;
+}
+.btn--primary {
+  color: white;
+  background-color: #3498db;
+}
+.btn--secondary {
+  color: white;
+  background-color: #9e9e9e;
+}
+.btn--success {
+  color: white;
+  background-color: #2ecc71;
+}
+.btn--danger {
+  color: white;
+  background-color: #e74c3c;
+}
+.btn--warning {
+  color: white;
+  background-color: #f1c40f;
+}
+.btn--info {
+  color: white;
+  background-color: #00ffff;
+}
+
+hr {
+  color: #111;
+}
+
+/*# sourceMappingURL=rich.css.map */

@@ -1,0 +1,5 @@
+BBS/*.json
+node_modules/
+generate.js
+licenses.json
+OpenOSVStyle.scss

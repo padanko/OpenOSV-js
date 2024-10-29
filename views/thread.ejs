@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/rich.css">
+    <title><%= thread.title %> - OpenOSV</title>
+</head>
+<body id="top">
+    <div id="status-bar">正常</div>
+    <div style="margin:20px;">
+
+        <div style="position:fixed; top:45vh; bottom: 55vh; right:1vw; display: flex; flex-direction: column;">
+            <a href="#top" class="button-upanddown">▲</a>
+            <a href="#form__" class="button-upanddown">▼</a>
+        </div>
+        <h1 style="color:red" id="title" class="title"><%= thread.title %></h1>
+        <div id="thr">
+            <% thread.contents.forEach((item, index) => { %>
+            <dl id='r<%= index %>' class="response">
+                <dt><a class="reply-button" onclick="reply('<%= index + 1 %>')"><%= index + 1 %></a>: <b style="color: green"><%- item.name %></b>, <%= item.date %>, ID: <%= item.id %></dt>
+                <dd><%- render(item.text) %></dd>
+            </dl>
+            <% }); %>
+        </div>
+        <hr>
+        <div style="color: white;" class="card card--danger" id="locked-dialog">
+            <h2>書き込めません</h2>
+            <p>ロック: 30s</p>
+        </div>
+        <button class="btn-color-1" id="bookmark">🔖ブックマーク</button>
+        <hr>
+        <div id="form__">
+            <input type="text" id="name" placeholder="お名前">
+            <textarea id="text" style="width: 100%; height:150px;"></textarea>
+            <button id="submit" style="width: 100%; height:70px;">投稿</button>
+        </div>
+    </div>
+    <br><br><br><br>
+    <div class="bottom-nav">
+        <a href="/">🏡ホーム</a>
+        <a href="/#dataform">🔨スレッドを作成</a>
+        <a href="/history">📗履歴</a>
+    </div>
+</body>
+<a href="/post/<%= thread.id %>" id="PostURL"></a>
+<a href="/get/<%= thread.id %>" id="GetURL"></a>
+<script src="/js/jquery.min.js"></script>
+<script src="/js/jquery.cookie.min.js"></script>
+<audio src="/audio/notify.wav" id="notify_audio"></audio>
+<audio src="/audio/unlock.wav" id="unlock_audio"></audio>
+<% if (locked)  { %>
+    <input type="hidden" id="isLocked" value="1">
+<% } else { %>
+    <input type="hidden" id="isLocked" value="0">
+<% } %>
+<script>
+    function render(text) {
+        
+        text = text.replace(/\n/g, "<br>");
+
+        return text
+
+    }
+
+    if ( $("#isLocked").val() == "0" ) {
+        $("#locked-dialog").hide();
+    }
+    function close_statusbar() {
+        i = setInterval(()=>{
+            $("#status-bar").fadeOut();
+            clearInterval(i);
+        }, 800);
+    }
+
+
+    function open_statusbar() {
+        $("#status-bar").slideDown(150);
+    }
+
+    $("#status-bar").hide();
+
+    var notify_audio = document.getElementById("notify_audio");
+    var unlock_audio = document.getElementById("unlock_audio");
+    $("#submit").click(() => {""
+        
+        name = $("#name").val();
+        text = $("#text").val();
+        $.ajax({
+            url: $("#PostURL")[0].href,
+            type: "POST",
+            dataType: 'text',
+            data: {
+                text: text,
+                name: name
+            },
+            success: (c) => {
+                console.log("成功　"+c);
+                
+                open_statusbar();
+                $("#status-bar")[0].style.backgroundColor = "#55dd88"
+                $("#status-bar").text("成功")
+                $("#text").val("");
+                close_statusbar();
+                
+                $("#text").val("")
+
+            }, error: (e) => {
+                console.error("エラー", e)
+                alert("サーバーに接続できない/サーバーが不安定");
+            }
+        })
+    })
+
+    function poll() {
+        fetch($("#GetURL")[0].href)
+            .then(d => d.json())
+            .then((d) => {
+                console.log(d)
+                if (d.type == 0) {
+                    if (d.ended) {
+                        $("#locked-dialog").fadeIn(100);
+                    } else {
+                        $("#locked-dialog").fadeOut(100);
+                        unlock_audio.pause();
+                        unlock_audio.currentTime=0;
+                        unlock_audio.play();
+                    }
+                    notify_audio.pause();
+                    notify_audio.currentTime=0;
+                    notify_audio.play();
+                    
+                    dl = document.createElement("dl")
+                    dl.classList = ["response"]
+                    dl.innerHTML = `<dt><a class="reply-button" onclick="reply('${document.getElementById("thr").querySelectorAll("dl").length + 1}')">${document.getElementById("thr").querySelectorAll("dl").length + 1}</a>: <b style="color: green">${d.data.name}</b>, ${d.data.date}, ID: ${d.data.id}</dt><dd>${d.data.text}</dd>`
+                    dl.id = `r${document.getElementById("thr").querySelectorAll("dl").length + 1}`
+                    document.getElementById("thr").appendChild(dl);
+                    $(`#r${document.getElementById("thr").querySelectorAll("dl").length}`).hide();
+                    $(`#r${document.getElementById("thr").querySelectorAll("dl").length}`).slideDown(100);
+                } else if (d.type == 1) {
+                    if (d.data) {
+                        $("#locked-dialog").fadeIn(100);
+                    } else {
+                        $("#locked-dialog").fadeOut(100);
+                        unlock_audio.pause();
+                        unlock_audio.currentTime=0;
+                        unlock_audio.play();
+                    }
+                }
+                
+                poll()
+            }).catch((d) => {
+                poll()
+            })
+    }
+
+    poll()
+
+    $("#bookmark").click(()=>{
+        if (!$.cookie("bookmark")) {
+            $.cookie("bookmark", "", {path: "/"})
+        }
+        var bookmarks = $.cookie("bookmark").split(" ")
+        if (!bookmarks.includes("<%= thread.id %>")) {
+            bookmarks.push("<%= thread.id %>")
+        } else {
+            bookmarks = bookmarks.filter(thrid => thrid != "<%= thread.id %>")
+        }
+        $.cookie("bookmark", bookmarks.join(" "), {path: "/"})
+    })
+</script>
+</html>
