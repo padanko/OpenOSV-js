@@ -14,12 +14,10 @@
     <table id="title__" border="1" cellspacing="7" cellpadding="3" width="95%" bgcolor="#CCFFCC" align="center"><tr><td>
         <h1>OpenOSV</h1> <!-- 掲示板の名前を変更する場合は中身を変えてください。　例: <h1>〇〇の個人掲示板</h1> など-->
         <p>OpenSource掲示板システム</p> <!-- ↑と同じく、中身を変えてください。例: <p>ようこそ</p> など。　-->
-        <p>最近できた新掲示板「ぷれーん2ch」応援してね</p>
-        <a href="https://2ckj.x10.mx/sn_sweet/index.php">https://2ckj.x10.mx/sn_sweet/index.php</a>
     </td></tr></table><br>
     <table border="1" cellspacing="7" cellpadding="3" width="95%" bgcolor="#CCFFCC" align="center"><tr><td>
         <% thread_list.forEach((item, index) => { %>
-            [<%= index + 1 %>]<a href="/thread/<%= item.id  %>" style="margin-right: 10px;"><%= item.title %> (<%= item.contents.length %>)</a> 
+            [<%= index + 1 %>]<a href="/thread/<%= item.id  %>" style="margin-right: 10px;"><%= item.title %> (<%= item.contents.length %>)</a><br>
         <% }); %>
     </td></tr></table><br>
     <table border="1" cellspacing="7" cellpadding="3" width="95%" bgcolor="#CCFFCC" align="center"><tr><td>

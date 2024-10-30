@@ -10,9 +10,7 @@
            |_|                                      
    
     OpenOSV v0.1.5
-    RustからNode.jsにしたわw
-
-
+    RustからNode.jsにした
 */
 
 const openosv_version = "0.1.5";
@@ -35,15 +33,15 @@ const app = express();
 // 処理
 function render(text) {
     
+    text = text.replace(/!Img:\"(.+)\"/g, "<img src=\"$1\">")
     text = text.replace(/\n/g, "<br>");
-
     return text
 
 }
 
 function parse(text, thread) {
 
-    lock_command = /!lock/
+    var lock_command = /!lock/;
     
     if ( lock_command.test(text) ) {
         thread.ended = true
@@ -131,18 +129,23 @@ app.use(bodyParser.urlencoded({ extended: true })); // URLエンコードされ�
 app.use(bodyParser.json()); // JSONデータを解析
 
 app.get("/", (req, res) => {
+    console.log("/");
     thread_list = thread_list_get();
     res.render("index", { version: openosv_version, thread_list: thread_list});
 });
 
 app.get("/thread/:id", (req, res) => {
+    console.log("/thread/:id");
     try {
         var data = fs.readFileSync(`./BBS/${req.params.id}.json`);
         var thread = JSON.parse(data);
+        var id = generate_random_userid(req.headers['x-forwarded-for'] || req.connection.remoteAddress || 'Unknown')
+
         ctx = {
             thread: thread,
             render: render,
-            locked: thread.ended
+            locked: thread.ended,
+            id: id
         }
         res.render('thread', ctx);        
     } catch ( err ) {
@@ -151,7 +154,7 @@ app.get("/thread/:id", (req, res) => {
 });
 
 app.get("/get/:id", (req, res) => {
-
+    console.log("/get/:id");
     var old_data = JSON.parse(fs.readFileSync(`./BBS/${req.params.id}.json`));
     var new_data = JSON.parse(fs.readFileSync(`./BBS/${req.params.id}.json`));
     var i = setInterval(()=>{
@@ -177,6 +180,7 @@ app.get("/get/:id", (req, res) => {
 })
 
 app.post("/post/thread", (req, res) => {
+    console.log("/post/thread");
     var {title, name, text} = req.body;
     const id = generate_random_userid(req.headers['x-forwarded-for'] || req.connection.remoteAddress || 'Unknown');
     const thrid = generate_random_threadid()
@@ -210,6 +214,7 @@ app.post("/post/thread", (req, res) => {
 });
 
 app.post("/post/:id", (req, res) => {
+    console.log("/post/:id");
     res.contentType("text/plain");
     var {name, text} = req.body;
 
@@ -221,7 +226,7 @@ app.post("/post/:id", (req, res) => {
         const id = generate_random_userid(req.headers['x-forwarded-for'] || req.connection.remoteAddress || 'Unknown')
         var data = fs.readFileSync(`./BBS/${req.params.id}.json`);
         var thread = JSON.parse(data);
-        if ( text != "" && !thread.ended && !thread.banned.includes(id)) {
+        if ( text != "" && !thread.ended && !thread.banned.includes(id) && thread.contents.length < 1000) {
             var d = new Date();
 
             text = escapeHtml(text);
@@ -246,8 +251,9 @@ app.post("/post/:id", (req, res) => {
 
 
 app.get("/history", (req, res) => {
+    console.log("/history");
     res.render("history", {})
-})
+});
 
 app.get("/api/tgJSON/:id", (req, res) => {
 
@@ -256,9 +262,60 @@ app.get("/api/tgJSON/:id", (req, res) => {
     res.contentType("application/json")
     res.end(JSON.stringify(new_data)); 
 
-})
+});
 
+app.post("/operation/ban", (req, res) => {
+    const id = generate_random_userid(req.headers['x-forwarded-for'] || req.connection.remoteAddress || 'Unknown')
+    
+    var thrid = req.body.thrid;
+    var rsp_index = req.body.rsp_index;
+    var thread = JSON.parse(fs.readFileSync(`./BBS/${thrid}.json`));
 
-app.listen(8080, () => {
-    console.log('Server is running on http://localhost:8080');
+    if ( rsp_index-1 < thread.contents.length && rsp_index > 0 && thread.admin == id) {
+        thread.banned.push(thread.contents[rsp_index-1].id);
+    }
+    fs.writeFileSync(`./BBS/${thrid}.json`, JSON.stringify(thread));
+    res.contentType("application/json");
+    res.end('"OK"'); 
+});
+
+app.post("/operation/Post-Thread-Delay", (req, res) => {
+    var {PTD_title, PTD_name, PTD_text, thrid} = req.body;
+
+    var from_thread = JSON.parse(fs.readFileSync(`./BBS/${thrid}.json`));
+
+    console.log("/operation/Post-Thread-Delay");
+    const id = generate_random_userid(req.headers['x-forwarded-for'] || req.connection.remoteAddress || 'Unknown');
+    new_thrid = generate_random_threadid()
+
+    if ( PTD_name == "" ) {
+        PTD_name = "名無しさん"
+    }
+
+    if ( PTD_text != "" ) {
+        var d = new Date();
+        var thread_object = {
+            title : PTD_title,
+            banned: from_thread.banned,
+            ended: false,
+            contents: [
+                {
+                    name: escapeHtml(PTD_name),
+                    text: escapeHtml(PTD_text),
+                    date: d.toLocaleString(),
+                    id: id
+                }
+            ],
+            admin: from_thread.admin,
+            id: new_thrid
+        }
+        
+        fs.writeFileSync(`./BBS/${new_thrid}.json`, JSON.stringify(thread_object));
+    }
+    res.redirect(`/thread/${new_thrid}`)
+
+});
+
+app.listen(8080, ()=>{
+    console.log("サーバーを開始: 8080")
 });

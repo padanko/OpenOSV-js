@@ -3,3 +3,5 @@ node_modules/
 generate.js
 licenses.json
 OpenOSVStyle.scss
+run.py
+public/wasm-example
