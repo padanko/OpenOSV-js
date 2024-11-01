@@ -30,37 +30,16 @@
     </div>
 </body>
 <a href="/api/tgJSON/REPLACEYSDBWJSWHDHDIW" id="base"></a> <!-- プロキシで使う人用　置き換えるマジックナンバー -->
-<script src="/static/jquery.min.js"></script>
-<script src="/static/jquery.cookie.min.js"></script>
+<script src="/js/jquery.min.js"></script>
+<script src="/js/jquery.cookie.min.js"></script>
 <script>
     const base = $("#base")[0].href
     var bookmark = $.cookie("bookmark") ? $.cookie("bookmark").split(" ") : [];
-    document.getElementById("bookmark-lists").innerHTML = "";
-    for (let i = 0; i < bookmark.length; i++) {
-        if (bookmark[i] != "") { // なぜか最初に余計なものが入り込むことがあるので
-            var thrid = bookmark[i];
-            var url = base.replace("REPLACEYSDBWJSWHDHDIW", thrid);
-            fetch(url).then(json => json.json()).then((json) => {
-                item = document.createElement("li")
-                link = document.createElement("a")
-                link.href = `/thread/${json.id}`
-                link.classList = ["history-a"]
-                link.innerText = `${json.title}`
-                len = document.createElement("small")
-                len.innerText = `(${json.contents.length})`
-                item.appendChild(link);
-                item.appendChild(len);
-                document.getElementById("bookmark-lists").appendChild(item)
 
-            })
-        }
-
-    }
-    setInterval(() => {
+    function Update() {
         document.getElementById("bookmark-lists").innerHTML = "";
-        var bookmark = $.cookie("bookmark") ? $.cookie("bookmark").split(" ") : [];
         for (let i = 0; i < bookmark.length; i++) {
-            if (i > 0) { // なぜか最初に余計なものが入り込むことがあるので
+            if (bookmark[i] != "") { // なぜか最初に余計なものが入り込むことがあるので
                 var thrid = bookmark[i];
                 var url = base.replace("REPLACEYSDBWJSWHDHDIW", thrid);
                 fetch(url).then(json => json.json()).then((json) => {
@@ -70,7 +49,7 @@
                     link.classList = ["history-a"]
                     link.innerText = `${json.title}`
                     len = document.createElement("small")
-                    len.innerText = `(${json.len})`
+                    len.innerText = `(${json.contents.length})`
                     item.appendChild(link);
                     item.appendChild(len);
                     document.getElementById("bookmark-lists").appendChild(item)
@@ -79,6 +58,12 @@
             }
 
         }
+    }
+    Update()
+    setInterval(() => {
+        document.getElementById("bookmark-lists").innerHTML = "";
+        var bookmark = $.cookie("bookmark") ? $.cookie("bookmark").split(" ") : [];
+        Update()
     }, 30000);
 
 </script>
