@@ -216,7 +216,7 @@ app.post("/post/thread", (req, res) => {
 app.post("/post/:id", (req, res) => {
     console.log("/post/:id");
     res.contentType("text/plain");
-    var {name, text} = req.body;
+    var {name, text, reply} = req.body;
 
     if ( name == "" ) {
         name = "名無しさん"
@@ -237,7 +237,8 @@ app.post("/post/:id", (req, res) => {
                 name: escapeHtml(name),
                 text: text,
                 date: d.toLocaleString(),
-                id: id
+                id: id,
+                reply_: reply != "" ? Number(reply) : null
             });
             fs.writeFileSync(`./BBS/${thread.id}.json`, JSON.stringify(thread));
             res.end("OK");

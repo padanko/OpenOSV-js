@@ -15,8 +15,8 @@
     <div id="status-bar">正常</div>
     <div style="margin:20px;">
 
-        <div style="position:fixed; top:45vh; bottom: 55vh; right:1vw; display: flex; flex-direction: column;">
-            <a href="#top" class="button-upanddown">▲</a>
+        <div style="position:fixed; top:35vh; right:1vw; display: flex; flex-direction: column;">
+            <a href="#title__" class="button-upanddown">▲</a>
             <a href="#form__" class="button-upanddown">▼</a>
         </div>
         <h1 style="color:red" id="title" class="title">
@@ -25,6 +25,12 @@
         <div id="thr">
             <% thread.contents.forEach((item, index)=> { %>
                 <dl id='r<%= index %>' class="response">
+                    <% if ( "reply_" in item && item.reply_) { %>
+                        <dl style="background-color: #ffcfcf; font-size: 11px; border-radius: 5px; padding:2px;">
+                            <dt><a class="reply-button" onclick="reply('<%= index + 1 %>')"><%= item.reply_ %></a>: <b style="color: green"><%- thread.contents[item.reply_-1].name || "名無しさん" %></b>, <%= thread.contents[item.reply_-1].date %>, ID: <%= thread.contents[item.reply_-1].id %></dt>
+                            <dd><%- render(thread.contents[item.reply_-1].text) %></dd>
+                        </dl>
+                    <% } %>
                     <dt><a class="reply-button" onclick="reply('<%= index + 1 %>')"><%= index + 1 %></a>: <b style="color: green"><%- item.name %></b>, <%= item.date %>, ID: <%= item.id %><input type="radio" value="<%= index + 1 %>" name="select-rsp"></dt>
                     <dd><%- render(item.text) %></dd>
                 </dl>
@@ -40,7 +46,8 @@
         <% if (id == thread.admin) { %>
         <button class="btn btn--danger" id="ban-short">アクセス禁止(BAN)</button>
         <% } %>
-        <button class="btn btn--primary" id="PTD-open">スレッドを伸ばす</button><br>
+        <button class="btn btn--primary" id="PTD-open">スレッドを伸ばす</button>
+        <button class="btn btn--primary" id="no-reply">リプライしない</button><br>
         <hr>
         <div id="form__">
             <input type="text" id="name" placeholder="お名前">
@@ -79,6 +86,7 @@
     <input type="hidden" id="isLocked" value="0">
 <% } %>
 <script>
+    var reply_ = null;
     function render(text) {
         text = text.replace(/\n/g, "<br>");
         return text
@@ -97,6 +105,7 @@
     }
     $("#status-bar").hide();
     $("#PTD").hide();
+    $("#no-reply").hide();
     var notify_audio = document.getElementById("notify_audio");
     var unlock_audio = document.getElementById("unlock_audio");
     $("#submit").click(() => {
@@ -109,7 +118,8 @@
             dataType: 'text',
             data: {
                 text: text,
-                name: name
+                name: name,
+                reply: reply_
             },
             success: (c) => {
                 console.log("成功　" + c);
@@ -135,9 +145,6 @@
                         $("#locked-dialog").fadeIn(100);
                     } else {
                         $("#locked-dialog").fadeOut(100);
-                        unlock_audio.pause();
-                        unlock_audio.currentTime = 0;
-                        unlock_audio.play();
                     }
                     notify_audio.pause();
                     notify_audio.currentTime = 0;
@@ -155,9 +162,6 @@
                         $("#locked-dialog").fadeIn(100);
                     } else {
                         $("#locked-dialog").fadeOut(100);
-                        unlock_audio.pause();
-                        unlock_audio.currentTime = 0;
-                        unlock_audio.play();
                     }
                 }
                 poll()
@@ -166,9 +170,12 @@
             })
     }
     poll()
+
     function reply(c) {
-        $("#text").val($("#text").val() + ">>" + c + "\n")
+        reply_ = c;
+        $("#no-reply").fadeIn(250)
     }
+    
     $("#bookmark").click(() => {
         if (!$.cookie("bookmark")) {
             $.cookie("bookmark", "", { path: "/" })
@@ -195,6 +202,7 @@
     $("#PTD-open").click(()=>{ $('#PTD').slideDown(200) });
 
     $("#ban-short").click(() => { $.ajax({url: $("#BanURL")[0].href, method: "POST", data: {thrid: "<%= thread.id %>", rsp_index: get_select_rsp()}}) })
+    $("#no-reply").click(()=>{reply_ = null; $("#no-reply").fadeOut(200) })
 </script>
 
 </html>

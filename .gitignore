@@ -5,3 +5,5 @@ licenses.json
 OpenOSVStyle.scss
 run.py
 public/wasm-example
+fullchain.pem
+privkey.pem
